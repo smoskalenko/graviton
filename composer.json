@@ -67,12 +67,12 @@
         "php-jsonpatch/php-jsonpatch": "@dev",
         "graviton/GravitonMessagingBundle": "@dev
     },
-    repositories: [
+    "repositories": [
         {
             "type": "vcs",
             "url": "git@github.com:libgraviton/GravitonMessagingBundle.git"
         }
-    ]
+    ],
     "config": {
       "github-oauth": {
         "github.com": "e404bdf27d2529d3a3b94532ab79d019992315d6"
