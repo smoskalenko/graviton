@@ -65,7 +65,8 @@
         "symfony/icu": "~1.0.0",
         "php-jsonpointer/php-jsonpointer": "@dev",
         "php-jsonpatch/php-jsonpatch": "@dev",
-        "graviton/GravitonMessagingBundle": "@dev
+        "graviton/graviton-messaging-bundle": "@dev",
+        "jdare/clank-bundle": "dev-master"
     },
     "repositories": [
         {
