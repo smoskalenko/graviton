@@ -94,7 +94,7 @@ class GenerateBundleCommand extends SymfonyGenerateBundleCommand
         // skip if kernel manipulation disabled by options (defaults to true)
         $doUpdate = $input->getOption('doUpdateKernel');
         if ($doUpdate == 'false') {
-            return;
+            return array();
         }
 
         $auto = true;
@@ -121,9 +121,9 @@ class GenerateBundleCommand extends SymfonyGenerateBundleCommand
                 'GravitonCoreBundle does not implement GravitonBundleInterface'
             );
         }
-        $manip = new BundleBundleManipulator($coreBundle);
+        $bundleManipulatior = new BundleBundleManipulator($coreBundle);
         try {
-            $ret = $auto ? $manip->addBundle($namespace . '\\' . $bundle) : false;
+            $ret = $auto ? $bundleManipulatior->addBundle($namespace . '\\' . $bundle) : false;
 
             if (!$ret) {
                 $reflected = new \ReflectionObject($kernel);
@@ -152,6 +152,8 @@ class GenerateBundleCommand extends SymfonyGenerateBundleCommand
                 ''
             );
         }
+
+        return array();
     }
 
     /**

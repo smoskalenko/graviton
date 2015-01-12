@@ -7,7 +7,6 @@ use Graviton\GeneratorBundle\Definition\DefinitionElementInterface;
 use Graviton\GeneratorBundle\Definition\JsonDefinition;
 use Symfony\Component\Console\Input\InputInterface;
 use Symfony\Component\DependencyInjection\Container;
-use Symfony\Component\Filesystem\Filesystem;
 use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 
 /**
@@ -27,10 +26,6 @@ use Symfony\Component\HttpKernel\Bundle\BundleInterface;
  */
 class ResourceGenerator extends AbstractGenerator
 {
-    /**
-     * @private
-     */
-    private $filesystem;
     /**
      * @private
      */
@@ -54,17 +49,15 @@ class ResourceGenerator extends AbstractGenerator
     /**
      * Instantiates generator object
      *
-     * @param InputInterface $input      Input
-     * @param FileSystem     $filesystem fs abstraction layer
-     * @param object         $doctrine   dbal
-     * @param object         $kernel     app kernel
+     * @param \Symfony\Component\Console\Input\InputInterface $input    Input
+     * @param object                                          $doctrine dbal
+     * @param object                                          $kernel   app kernel
      *
      * @return ResourceGenerator
      */
-    public function __construct(InputInterface $input, $filesystem, $doctrine, $kernel)
+    public function __construct(InputInterface $input, $doctrine, $kernel)
     {
         $this->input = $input;
-        $this->filesystem = $filesystem;
         $this->doctrine = $doctrine;
         $this->kernel = $kernel;
     }
@@ -72,11 +65,11 @@ class ResourceGenerator extends AbstractGenerator
     /**
      * generate the resource with all its bits and parts
      *
-     * @param BundleInterface $bundle         bundle
-     * @param string          $document       document name
-     * @param string          $format         format of config files (please use xml)
-     * @param array           $fields         fields to add
-     * @param boolean         $withRepository generate repository class
+     * @param \Symfony\Component\HttpKernel\Bundle\BundleInterface $bundle         bundle
+     * @param string                                               $document       document name
+     * @param string                                               $format         format of config files (please use xml)
+     * @param array                                                $fields         fields to add
+     * @param boolean                                              $withRepository generate repository class
      *
      * @return void
      */
@@ -122,8 +115,7 @@ class ResourceGenerator extends AbstractGenerator
                     $this->json instanceof JsonDefinition &&
                     $this->json->getField($field['fieldName']) instanceof DefinitionElementInterface
                 ) {
-                    $fieldInformation = $this->json->getField($field['fieldName'])
-                                                   ->getDefAsArray();
+                    $fieldInformation = $this->json->getField($field['fieldName'])->getDefAsArray();
 
                     // in this context, the default type is the doctrine type..
                     if (isset($fieldInformation['doctrineType'])) {
@@ -139,12 +131,12 @@ class ResourceGenerator extends AbstractGenerator
         );
 
         $parameters = array(
-            'document' => $document,
-            'base' => $bundleNamespace,
-            'bundle' => $bundle->getName(),
-            'format' => $format,
-            'json' => $this->json,
-            'fields' => $fields,
+            'document'        => $document,
+            'base'            => $bundleNamespace,
+            'bundle'          => $bundle->getName(),
+            'format'          => $format,
+            'json'            => $this->json,
+            'fields'          => $fields,
             'bundle_basename' => $basename,
             'extension_alias' => Container::underscore($basename),
         );
@@ -162,7 +154,9 @@ class ResourceGenerator extends AbstractGenerator
             }
         }
 
-        $this->generateDocument($parameters, $dir, $document, $withRepository);
+        $this->generateDocument($parameters, $dir, $document);
+        $this->registerServices($parameters, $dir, $document, $withRepository);
+
         $this->generateSerializer($parameters, $dir, $document);
         $this->generateModel($parameters, $dir, $document);
 
@@ -178,14 +172,13 @@ class ResourceGenerator extends AbstractGenerator
     /**
      * generate document part of a resource
      *
-     * @param array   $parameters     twig parameters
-     * @param string  $dir            base bundle dir
-     * @param string  $document       document name
-     * @param boolean $withRepository generate repository class
+     * @param array  $parameters twig parameters
+     * @param string $dir        base bundle dir
+     * @param string $document   document name
      *
      * @return void
      */
-    protected function generateDocument($parameters, $dir, $document, $withRepository)
+    protected function generateDocument($parameters, $dir, $document)
     {
         $this->renderFile(
             'document/Document.mongodb.xml.twig',
@@ -198,20 +191,32 @@ class ResourceGenerator extends AbstractGenerator
             $dir . '/Document/' . $document . '.php',
             $parameters
         );
+    }
 
+    /**
+     * registers defined services in corresponding XML files
+     *
+     * @param array   $parameters     twig parameters
+     * @param string  $dir            base bundle dir
+     * @param string  $document       document name
+     * @param boolean $withRepository generate repository class
+     */
+    private function registerServices(array $parameters, $dir, $document, $withRepository)
+    {
         $services = $this->loadServices($dir);
 
         $bundleParts = explode('\\', $parameters['base']);
-        $shortName = $bundleParts[0];
-        $shortBundle = substr($bundleParts[1], 0, -6);
+        $shortName = strtolower($bundleParts[0]);
+        $shortBundle = strtolower(substr($bundleParts[1], 0, -6));
+        $documentName = strtolower($parameters['document']);
 
         $docName = implode(
             '.',
             array(
-                strtolower($shortName),
-                strtolower($shortBundle),
+                $shortName,
+                $shortBundle,
                 'document',
-                strtolower($parameters['document'])
+                $documentName
             )
         );
 
@@ -230,10 +235,10 @@ class ResourceGenerator extends AbstractGenerator
             $repoName = implode(
                 '.',
                 array(
-                    strtolower($shortName),
-                    strtolower($shortBundle),
+                    $shortName,
+                    $shortBundle,
                     'repository',
-                    strtolower($parameters['document'])
+                    $documentName
                 )
             );
 
@@ -252,7 +257,7 @@ class ResourceGenerator extends AbstractGenerator
                 null,
                 array(
                     array(
-                        'type' => 'string',
+                        'type'  => 'string',
                         'value' => $parameters['bundle'] . ':' . $document
                     )
                 ),
@@ -326,7 +331,7 @@ class ResourceGenerator extends AbstractGenerator
     private function addNodeIfMissing(&$dom, $element, $container = 'container')
     {
         $container = $dom->getElementsByTagName($container)
-                         ->item(0);
+            ->item(0);
         $nodes = $dom->getElementsByTagName($element);
         if ($nodes->length < 1) {
             $newNode = $dom->createElement($element);
@@ -582,7 +587,7 @@ class ResourceGenerator extends AbstractGenerator
             null,
             array(
                 array(
-                    'method' => 'setRepository',
+                    'method'  => 'setRepository',
                     'service' => $repoName
                 )
             )
@@ -628,7 +633,7 @@ class ResourceGenerator extends AbstractGenerator
             'request',
             array(
                 array(
-                    'method' => 'setModel',
+                    'method'  => 'setModel',
                     'service' => implode(
                         '.',
                         array($shortName, $shortBundle, 'model', strtolower($parameters['document']))

@@ -77,7 +77,6 @@ class GenerateResourceCommand extends GenerateDoctrineEntityCommand
     {
         return new ResourceGenerator(
             $this->input,
-            $this->getContainer()->get('filesystem'),
             $this->getContainer()->get('doctrine'),
             $this->getContainer()->get('kernel')
         );

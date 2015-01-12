@@ -32,39 +32,39 @@ class BundleGenerator extends AbstractGenerator
     public function generate($namespace, $bundle, $dir, $format)
     {
         $dir .= '/' . strtr($namespace, '\\', '/');
-        if (file_exists($dir)) {
-            if (!is_dir($dir)) {
-                throw new \RuntimeException(
-                    sprintf(
-                        'Unable to generate the bundle as the target directory "%s" exists but is a file.',
-                        realpath($dir)
-                    )
-                );
-            }
-            $files = scandir($dir);
-            if ($files != array('.', '..')) {
-                throw new \RuntimeException(
-                    sprintf(
-                        'Unable to generate the bundle as the target directory "%s" is not empty.',
-                        realpath($dir)
-                    )
-                );
-            }
-            if (!is_writable($dir)) {
-                throw new \RuntimeException(
-                    sprintf(
-                        'Unable to generate the bundle as the target directory "%s" is not writable.',
-                        realpath($dir)
-                    )
-                );
-            }
+        if (!is_dir($dir)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to generate the bundle as the target directory "%s" exists but is a file.',
+                    realpath($dir)
+                )
+            );
+        }
+        $files = scandir($dir);
+        if ($files != array('.', '..')) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to generate the bundle as the target directory "%s" is not empty.',
+                    realpath($dir)
+                )
+            );
+        }
+        if (!is_writable($dir)) {
+            throw new \RuntimeException(
+                sprintf(
+                    'Unable to generate the bundle as the target directory "%s" is not writable.',
+                    realpath($dir)
+                )
+            );
         }
 
+        //@todo: check if the content of document is postfixed with 'Bundle' before trying to remove it.
         $basename = substr($bundle, 0, -6);
+
         $parameters = array(
-            'namespace' => $namespace,
-            'bundle' => $bundle,
-            'format' => $format,
+            'namespace'       => $namespace,
+            'bundle'          => $bundle,
+            'format'          => $format,
             'bundle_basename' => $basename,
             'extension_alias' => Container::underscore($basename),
         );
