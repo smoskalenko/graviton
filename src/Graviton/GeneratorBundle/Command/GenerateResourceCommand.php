@@ -76,9 +76,8 @@ class GenerateResourceCommand extends GenerateDoctrineEntityCommand
     protected function createGenerator()
     {
         return new ResourceGenerator(
-            $this->input,
-            $this->getContainer()->get('doctrine'),
-            $this->getContainer()->get('kernel')
+            $this->input->getOption('json'),
+            'true' == $this->input->getOption('no-controller')
         );
     }
 }

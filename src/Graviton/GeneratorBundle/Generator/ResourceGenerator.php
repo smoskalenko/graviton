@@ -27,17 +27,14 @@ use Symfony\Component\HttpKernel\Bundle\BundleInterface;
 class ResourceGenerator extends AbstractGenerator
 {
     /**
-     * @private
+     * @var null|string
      */
-    private $doctrine;
+    private $jsonOption;
+
     /**
-     * @private
+     * @var bool
      */
-    private $kernel;
-    /**
-     * @private
-     */
-    private $input;
+    private $noControllerOption;
 
     /**
      * our json file definition
@@ -49,17 +46,13 @@ class ResourceGenerator extends AbstractGenerator
     /**
      * Instantiates generator object
      *
-     * @param \Symfony\Component\Console\Input\InputInterface $input    Input
-     * @param object                                          $doctrine dbal
-     * @param object                                          $kernel   app kernel
-     *
-     * @return ResourceGenerator
+     * @param null $jsonOption
+     * @param bool $hasNoControllerOption
      */
-    public function __construct(InputInterface $input, $doctrine, $kernel)
+    public function __construct($jsonOption = null, $hasNoControllerOption = false)
     {
-        $this->input = $input;
-        $this->doctrine = $doctrine;
-        $this->kernel = $kernel;
+        $this->jsonOption = $jsonOption;
+        $this->noControllerOption = $hasNoControllerOption;
     }
 
     /**
@@ -73,18 +66,17 @@ class ResourceGenerator extends AbstractGenerator
      *
      * @return void
      */
-    public function generate(BundleInterface $bundle, $document, $format, array $fields, $withRepository)
+    public function generate(BundleInterface $bundle, $document, $format, array $fields, $withRepository = false)
     {
         $dir = $bundle->getPath();
 
         //@todo: check if the content of document is postfixed with 'Bundle' before trying to remove it.
         $basename = substr($document, 0, -6);
-
         $bundleNamespace = substr(get_class($bundle), 0, 0 - strlen($bundle->getName()));
 
         // do we have a json path passed?
-        if (!is_null($this->input->getOption('json'))) {
-            $this->json = new JsonDefinition($this->input->getOption('json'));
+        if (!is_null($this->jsonOption)) {
+            $this->json = new JsonDefinition($this->jsonOption);
             $this->json->setNamespace($bundleNamespace);
         }
 
@@ -98,7 +90,7 @@ class ResourceGenerator extends AbstractGenerator
                     $field['serializerType'] = sprintf('array<%s>', substr($field['type'], 0, -2));
                 }
 
-                // @todo this assumtion is a hack and needs fixing
+                // @todo this assumption is a hack and needs fixing
                 if ($field['type'] === 'array') {
                     $field['serializerType'] = 'array<string>';
                 }
@@ -155,7 +147,7 @@ class ResourceGenerator extends AbstractGenerator
         }
 
         $this->generateDocument($parameters, $dir, $document);
-        $this->registerServices($parameters, $dir, $document, $withRepository);
+        $this->registerServices($services, $parameters, $dir, $document, $withRepository);
 
         $this->generateSerializer($parameters, $dir, $document);
         $this->generateModel($parameters, $dir, $document);
@@ -164,7 +156,7 @@ class ResourceGenerator extends AbstractGenerator
             $this->generateFixtures($parameters, $dir, $document);
         }
 
-        if ($this->input->getOption('no-controller') != 'true') {
+        if (false === $this->noControllerOption) {
             $this->generateController($parameters, $dir, $document);
         }
     }
@@ -201,16 +193,18 @@ class ResourceGenerator extends AbstractGenerator
      * @param string  $document       document name
      * @param boolean $withRepository generate repository class
      */
-    private function registerServices(array $parameters, $dir, $document, $withRepository)
+    private function registerServices(array $parameters, $dir, $document, $withRepository = false)
     {
         $services = $this->loadServices($dir);
 
         $bundleParts = explode('\\', $parameters['base']);
         $shortName = strtolower($bundleParts[0]);
+
+        //@todo: check if the content of document is postfixed with 'Bundle' before trying to remove it.
         $shortBundle = strtolower(substr($bundleParts[1], 0, -6));
         $documentName = strtolower($parameters['document']);
 
-        $docName = implode(
+        $serviceId = implode(
             '.',
             array(
                 $shortName,
@@ -220,59 +214,46 @@ class ResourceGenerator extends AbstractGenerator
             )
         );
 
+        $serviceParameterContent = $parameters['base'] . 'Document\\' . $parameters['document'];
+        $serviceParent = null;
+        $serviceScope = null;
+        $serviceCalls = array();
+        $serviceTag = null;
+        $serviceArgs = array();
+        $serviceFactoryService = null;
+        $serviceMethod = null;
+
         $services = $this->addParam(
             $services,
-            $docName . '.class',
-            $parameters['base'] . 'Document\\' . $parameters['document']
+            $serviceId . '.class',
+            $serviceParameterContent
         );
 
         $services = $this->addService(
             $services,
-            $docName
+            $serviceId,
+            $serviceParent,
+            $serviceScope,
+            $serviceCalls,
+            $serviceTag,
+            $serviceArgs,
+            $serviceFactoryService,
+            $serviceMethod
         );
 
-        if ($withRepository) {
-            $repoName = implode(
-                '.',
-                array(
-                    $shortName,
-                    $shortBundle,
-                    'repository',
-                    $documentName
-                )
-            );
-
-            $services = $this->addParam(
-                $services,
-                $repoName . '.class',
-                $parameters['base'] . 'Repository\\' . $parameters['document']
-            );
-
-            $services = $this->addService(
-                $services,
-                $repoName,
-                null,
-                null,
-                array(),
-                null,
-                array(
-                    array(
-                        'type'  => 'string',
-                        'value' => $parameters['bundle'] . ':' . $document
-                    )
-                ),
-                'doctrine_mongodb.odm.default_document_manager',
-                'getRepository'
-            );
-
-            $this->renderFile(
-                'document/DocumentRepository.php.twig',
-                $dir . '/Repository/' . $document . 'Repository.php',
-                $parameters
+        if (true === $withRepository) {
+            $services = $this->registerServiceRepository(
+                $parameters,
+                $dir,
+                $document,
+                $shortName,
+                $shortBundle,
+                $documentName,
+                $services
             );
         }
 
-        file_put_contents($dir . '/Resources/config/services.xml', $services->saveXML());
+        $this->persistServices($services, $dir);
     }
 
     /**
@@ -288,6 +269,77 @@ class ResourceGenerator extends AbstractGenerator
         $services->formatOutput = true;
         $services->preserveWhiteSpace = false;
         $services->load($dir . '/Resources/config/services.xml');
+
+        return $services;
+    }
+
+    /**
+     * @param \DOMDocument $services
+     * @param string $dir
+     */
+    private function persistServices(\DOMDocument $services, $dir)
+    {
+        file_put_contents($dir . '/Resources/config/services.xml', $services->saveXML());
+    }
+
+    /**
+     * @param array $parameters
+     * @param       $dir
+     * @param       $document
+     * @param       $shortName
+     * @param       $shortBundle
+     * @param       $documentName
+     * @param       $services
+     *
+     * @return \DOMDocument
+     */
+    protected function registerServiceRepository(
+        array $parameters,
+        $dir,
+        $document,
+        $shortName,
+        $shortBundle,
+        $documentName,
+        \DOMDocument $services
+    ) {
+        $repoName = implode(
+            '.',
+            array(
+                $shortName,
+                $shortBundle,
+                'repository',
+                $documentName
+            )
+        );
+
+        $services = $this->addParam(
+            $services,
+            $repoName . '.class',
+            $parameters['base'] . 'Repository\\' . $parameters['document']
+        );
+
+        $services = $this->addService(
+            $services,
+            $repoName,
+            null,
+            null,
+            array(),
+            null,
+            array(
+                array(
+                    'type' => 'string',
+                    'value' => $parameters['bundle'] . ':' . $document
+                )
+            ),
+            'doctrine_mongodb.odm.default_document_manager',
+            'getRepository'
+        );
+
+        $this->renderFile(
+            'document/DocumentRepository.php.twig',
+            $dir . '/Repository/' . $document . 'Repository.php',
+            $parameters
+        );
 
         return $services;
     }
@@ -378,7 +430,7 @@ class ResourceGenerator extends AbstractGenerator
      * @return \DOMDocument
      */
     private function addService(
-        $dom,
+        \DOMDocument $dom,
         $id,
         $parent = null,
         $scope = null,
@@ -570,30 +622,46 @@ class ResourceGenerator extends AbstractGenerator
 
         $bundleParts = explode('\\', $parameters['base']);
         $shortName = strtolower($bundleParts[0]);
+
+        //@todo: check if the content of document is postfixed with 'Bundle' before trying to remove it.
         $shortBundle = strtolower(substr($bundleParts[1], 0, -6));
+
         $paramName = implode('.', array($shortName, $shortBundle, 'model', strtolower($parameters['document'])));
         $repoName = implode('.', array($shortName, $shortBundle, 'repository', strtolower($parameters['document'])));
+
+        $serviceParameterContent = $parameters['base'] . 'Model\\' . $parameters['document'];
+        $serviceParent = 'graviton.rest.model';
+        $serviceScope = null;
+        $serviceCalls = array(
+            array(
+                'method'  => 'setRepository',
+                'service' => $repoName
+            )
+        );
+        $serviceTag = null;
+        $serviceArgs = array();
+        $serviceFactoryService = null;
+        $serviceMethod = null;
 
         $services = $this->addParam(
             $services,
             $paramName . '.class',
-            $parameters['base'] . 'Model\\' . $parameters['document']
+            $serviceParameterContent
         );
 
         $services = $this->addService(
             $services,
-            $paramName,
-            'graviton.rest.model',
-            null,
-            array(
-                array(
-                    'method'  => 'setRepository',
-                    'service' => $repoName
-                )
-            )
+            $serviceId,
+            $serviceParent,
+            $serviceScope,
+            $serviceCalls,
+            $serviceTag,
+            $serviceArgs,
+            $serviceFactoryService,
+            $serviceMethod
         );
 
-        file_put_contents($dir . '/Resources/config/services.xml', $services->saveXML());
+        $this->persistServices($services, $dir);
     }
 
     /**
@@ -617,33 +685,61 @@ class ResourceGenerator extends AbstractGenerator
 
         $bundleParts = explode('\\', $parameters['base']);
         $shortName = strtolower($bundleParts[0]);
+
+        //@todo: check if the content of document is postfixed with 'Bundle' before trying to remove it.
         $shortBundle = strtolower(substr($bundleParts[1], 0, -6));
-        $paramName = implode('.', array($shortName, $shortBundle, 'controller', strtolower($parameters['document'])));
+
+        $serviceId = implode(
+            '.',
+            array(
+                $shortName,
+                $shortBundle,
+                'controller',
+                strtolower($parameters['document'])
+            )
+        );
+
+        $serviceParameterContent = $parameters['base'] . 'Controller\\' . $parameters['document'] . 'Controller';
+        $serviceParent = 'graviton.rest.controller';
+        $serviceScope = 'request';
+        $serviceCalls = array(
+            array(
+                'method'  => 'setModel',
+                'service' => implode(
+                    '.',
+                    array(
+                        $shortName,
+                        $shortBundle,
+                        'model',
+                        strtolower($parameters['document'])
+                    )
+                )
+            )
+        );
+        $serviceTag = 'graviton.rest';
+        $serviceArgs = array();
+        $serviceFactoryService = null;
+        $serviceMethod = null;
 
         $services = $this->addParam(
             $services,
-            $paramName . '.class',
-            $parameters['base'] . 'Controller\\' . $parameters['document'] . 'Controller'
+            $serviceId . '.class',
+            $serviceParameterContent
         );
 
         $services = $this->addService(
             $services,
-            $paramName,
-            'graviton.rest.controller',
-            'request',
-            array(
-                array(
-                    'method'  => 'setModel',
-                    'service' => implode(
-                        '.',
-                        array($shortName, $shortBundle, 'model', strtolower($parameters['document']))
-                    )
-                )
-            ),
-            'graviton.rest'
+            $serviceId,
+            $serviceParent,
+            $serviceScope,
+            $serviceCalls,
+            $serviceTag,
+            $serviceArgs,
+            $serviceFactoryService,
+            $serviceMethod
         );
 
-        file_put_contents($dir . '/Resources/config/services.xml', $services->saveXML());
+        $this->persistServices($services, $dir);
     }
 
     /**
