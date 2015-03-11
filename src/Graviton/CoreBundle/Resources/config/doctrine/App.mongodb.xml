@@ -1,9 +1,16 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <doctrine-mongo-mapping xmlns="http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping"
+      xmlns:gedmo="http://gediminasm.org/schemas/orm/doctrine-extensions-mapping"
       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
       xsi:schemaLocation="http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping.xsd">
   <document name="Graviton\CoreBundle\Document\App" repository-class="Graviton\CoreBundle\Repository\AppRepository">
     <field fieldName="id" type="string" id="true"/>
+    <field fieldName="created" type="date">
+      <gedmo:timestampable on="create"/>
+    </field>
+    <field fieldName="updated" type="date">
+      <gedmo:timestampable on="update"/>
+    </field>
     <field fieldName="title" type="string"/>
     <field fieldName="showInMenu" type="boolean"/>
     <field fieldName="order" type="int"/>
