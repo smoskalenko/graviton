@@ -63,6 +63,19 @@
         "description": "Unique identifier for an item."
       },
       {
+        "name": "created",
+        "type": "datetime",
+        "title": "Created",
+        "description": "Record creation timestamp.",
+        "extras": [
+            {
+                "namespace": "gedmo",
+                "tag": "timestampable",
+                "attributes": [ { "key": "on", "value": "create" } ]
+            }   
+        ]
+      },
+      {
         "name": "key",
         "type": "varchar",
         "title": "Key",
