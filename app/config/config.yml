@@ -75,6 +75,7 @@ stof_doctrine_extensions:
         default:
             loggable: true
             softdeleteable: true
+            timestampable: true
 
 # Swiftmailer Configuration
 #swiftmailer:

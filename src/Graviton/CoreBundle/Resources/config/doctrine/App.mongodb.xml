@@ -5,12 +5,10 @@
       xsi:schemaLocation="http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping.xsd">
   <document name="Graviton\CoreBundle\Document\App" repository-class="Graviton\CoreBundle\Repository\AppRepository">
     <field fieldName="id" type="string" id="true"/>
-    <field fieldName="created" type="date">
-      <gedmo:timestampable on="create"/>
-    </field>
-    <field fieldName="updated" type="date">
-      <gedmo:timestampable on="update"/>
-    </field>
+    <field fieldName="created" type="date"/>
+    <gedmo:timestampable on="create" field="created"/>
+    <field fieldName="updated" type="date"/>
+    <gedmo:timestampable on="update" field="updated"/>
     <field fieldName="title" type="string"/>
     <field fieldName="showInMenu" type="boolean"/>
     <field fieldName="order" type="int"/>

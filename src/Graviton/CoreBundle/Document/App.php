@@ -153,7 +153,7 @@ class App implements TranslatableDocumentInterface
     /**
      * Set created
      *
-     * @param date $created
+     * @param date $created create date
      * @return self
      */
     public function setCreated($created)
@@ -175,7 +175,7 @@ class App implements TranslatableDocumentInterface
     /**
      * Set updated
      *
-     * @param date $updated
+     * @param date $updated update date
      * @return self
      */
     public function setUpdated($updated)

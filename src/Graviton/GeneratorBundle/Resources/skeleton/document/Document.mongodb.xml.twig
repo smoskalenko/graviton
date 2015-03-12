@@ -38,22 +38,15 @@
                     </{{ relType }}-one>
                 {% endif %}
             {% elseif 'Graviton' not in field.type %}
+                {% if field.type == 'object' %}
+                    <field fieldName="{{ field.fieldName }}" type="hash"/>
+                {% elseif field.type != 'hash' %}
+                    <field fieldName="{{ field.fieldName }}" type="{{ field.type }}"/>
+                {% endif %}
                 {% if field.extras is defined %}
-                    {% if field.type == 'object' %}
-                        <field fieldName="{{ field.fieldName }}" type="hash">
-                    {% elseif field.type != 'hash' %}
-                        <field fieldName="{{ field.fieldName }}" type="{{ field.type }}">
-                    {% endif %}
                     {% for extra in field.extras %}
-                            <{{extra.namespace}}:{{extra.tag}} {% for attr in extra.attributes %}{{attr.key}}="{{attr.value}}" {% endfor %} />
+                        <{{extra.namespace}}:{{extra.tag}} {% for attr in extra.attributes %}{{attr.key}}="{{attr.value}}" {% endfor %} />
                     {% endfor %}
-                        </field>
-                {% else %}
-                    {% if field.type == 'object' %}
-                        <field fieldName="{{ field.fieldName }}" type="hash"/>
-                    {% elseif field.type != 'hash' %}
-                        <field fieldName="{{ field.fieldName }}" type="{{ field.type }}"/>
-                    {% endif %}
                 {% endif %}
             {% endif %}
         {% endfor %}

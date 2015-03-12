@@ -47,7 +47,7 @@ class Product
     /**
      * Set name
      *
-     * @param hash $name
+     * @param hash $name name
      * @return self
      */
     public function setName($name)
