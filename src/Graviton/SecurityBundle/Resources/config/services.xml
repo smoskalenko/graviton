@@ -51,6 +51,13 @@
           </call>
         </service>
 
+        <service id="graviton.test.contract.model.contract"
+                 class="Graviton\SecurityBundle\Tests\Fixtures\Model\Contract">
+          <call method="setRepository">
+            <argument type="service" id="graviton.core.repository.app"/>
+          </call>
+        </service>
+
         <service id="graviton_airlock_authentication_key_user_provider"
                  class="Graviton\SecurityBundle\User\AirlockAuthenticationKeyUserProvider">
             <argument type="service" id="graviton.authentication.user_provider.model"/>

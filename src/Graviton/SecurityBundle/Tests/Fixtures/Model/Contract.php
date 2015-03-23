@@ -1,6 +1,6 @@
 <?php
 
-namespace GravitonDyn\SecurityBundle\Tests\Fixtures\Model;
+namespace Graviton\SecurityBundle\Tests\Fixtures\Model;
 
 use Graviton\RestBundle\Model\DocumentModel;
 use Symfony\Component\DependencyInjection\ContainerInterface;
@@ -25,7 +25,7 @@ class Contract extends DocumentModel
      *
      * @param ContainerInterface $container Symfony's DIC
      *
-     * @return \GravitonDyn\SecurityBundle\Tests\Fixtures\Model\Contract
+     * @return \Graviton\SecurityBundle\Tests\Fixtures\Model\Contract
      */
     public function __construct(ContainerInterface $container)
     {
