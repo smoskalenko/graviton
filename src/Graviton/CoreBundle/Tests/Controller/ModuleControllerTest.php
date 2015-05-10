@@ -140,7 +140,7 @@ class ModuleControllerTest extends RestTestCase
         $testModule = new \stdClass;
         $testModule->key = 'test';
         $testModule->app = new \stdClass;
-        $testModule->app->{'$ref'} = 'http://localhost/core/app/testapp';
+        $testModule->app->{'$ref'} = 'http://localhost/core/app/tablet';
         $testModule->name = new \stdClass;
         $testModule->name->en = 'Name';
         $testModule->path = '/test/test';
@@ -154,7 +154,7 @@ class ModuleControllerTest extends RestTestCase
 
         $this->assertResponseContentType(self::CONTENT_TYPE, $response);
 
-        $this->assertEquals('http://localhost/core/app/testapp', $results->app->{'$ref'});
+        $this->assertEquals('http://localhost/core/app/tablet', $results->app->{'$ref'});
         $this->assertEquals(50, $results->order);
 
         $this->assertContains(
@@ -173,7 +173,7 @@ class ModuleControllerTest extends RestTestCase
         $testModule = new \stdClass;
         $testModule->key = 'test';
         $testModule->app = new \stdClass;
-        $testModule->app->{'$ref'} = 'http://localhost/core/app/testapp';
+        $testModule->app->{'$ref'} = 'http://localhost/core/app/tablet';
         $testModule->name = new \stdClass;
         $testModule->name->en = 'Name';
         $testModule->path = '/test/test';
@@ -189,6 +189,38 @@ class ModuleControllerTest extends RestTestCase
         $this->assertEquals('This value should be of type integer.', $results[0]->message);
 
         $this->assertEquals(400, $response->getStatusCode());
+    }
+
+    /**
+     * test validation error for extref types
+     *
+     * @return void
+     */
+    public function testPostInvalidReference()
+    {
+        $testModule = new \stdClass;
+        $testModule->key = 'test';
+        $testModule->app = new \stdClass;
+        $testModule->app->{'$ref'} = 'http://localhost/core/app/invalidapp';
+        $testModule->name = new \stdClass;
+        $testModule->name->en = 'Name';
+        $testModule->path = '/test/test';
+        $testModule->order = 1;
+
+        $client = static::createRestClient();
+        $client->post('/core/module', $testModule);
+
+        $response = $client->getResponse();
+        $results = $client->getResults();
+
+        $this->assertEquals(400, $response->getStatusCode());
+        $this->assertInternalType('array', $results);
+
+        $this->assertContains(
+            'The reference "http://localhost/core/app/invalidapp" does not exist',
+            $results[0]->message
+        );
+        $this->assertEquals('app.$ref', $results[0]->property_path);
     }
 
     /**
