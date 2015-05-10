@@ -15,4 +15,12 @@ use Symfony\Component\Validator\Constraint;
 class ExistingReference extends Constraint
 {
     public $message = 'The reference "%" does not exist. It must point to an existing endpoint.';
+
+    /**
+     * @return string
+     */
+    public function validatedBy()
+    {
+        return get_class($this).'Validator';
+    }
 }

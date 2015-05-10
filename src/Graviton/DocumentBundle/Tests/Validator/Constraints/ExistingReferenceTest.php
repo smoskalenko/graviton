@@ -23,4 +23,17 @@ class ExistingReferenceTest extends \PHPUnit_Framework_TestCase
 
         $this->assertEquals('The reference "%" does not exist. It must point to an existing endpoint.', $sut->message);
     }
+
+    /**
+     * @return void
+     */
+    public function testValidatedBy()
+    {
+        $sut = new ExistingReference;
+
+        $this->assertEquals(
+            'Graviton\DocumentBundle\Validator\Constraints\ExistingReferenceValidator',
+            $sut->validatedBy()
+        );
+    }
 }
