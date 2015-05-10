@@ -16,6 +16,7 @@
             <tag name="kernel.event_listener" event="graviton.rest.response" method="onKernelResponse"/>
         </service>
         <service id="graviton.document.validator.constraint_validator.existing_reference" class="%graviton.document.validator.constraint_validator.existing_reference.class%">
+            <argument type="service" id="doctrine.odm.mongodb.document_manager"/>
             <tag name="validator.constraint_validator" alias="alias_name" />
         </service>
     </services>
