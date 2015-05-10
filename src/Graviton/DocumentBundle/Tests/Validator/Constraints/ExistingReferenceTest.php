@@ -3,9 +3,9 @@
  * validate existing extref constraint
  */
 
-namespace Graviton\DocumentBundle\Test\Constraints;
+namespace Graviton\DocumentBundle\Test\Validator\Constraints;
 
-use Graviton\DocumentBundle\Constraints\ExistingReference;
+use Graviton\DocumentBundle\Validator\Constraints\ExistingReference;
 
 /**
  * @author   List of contributors <https://github.com/libgraviton/graviton/graphs/contributors>

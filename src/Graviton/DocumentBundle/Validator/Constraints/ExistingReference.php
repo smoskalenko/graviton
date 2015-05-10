@@ -3,7 +3,7 @@
  * constraint for required references
  */
 
-namespace Graviton\DocumentBundle\Constraints;
+namespace Graviton\DocumentBundle\Validator\Constraints;
 
 use Symfony\Component\Validator\Constraint;
 
