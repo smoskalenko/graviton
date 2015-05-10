@@ -32,7 +32,7 @@ class ExistingReferenceTest extends \PHPUnit_Framework_TestCase
         $sut = new ExistingReference;
 
         $this->assertEquals(
-            'Graviton\DocumentBundle\Validator\Constraints\ExistingReferenceValidator',
+            'graviton.document.validator.constraint.existing_reference',
             $sut->validatedBy()
         );
     }
