@@ -84,7 +84,12 @@
         "type": "extref",
         "title": "Language-Link",
         "description": "Link to language document.",
-        "exposeAs": "$ref"
+        "exposeAs": "$ref",
+        "constraints": [
+          {
+            "name": "Graviton\\DocumentBundle\\Validator\\Constraints\\ExistingReference"
+          }
+        ]
       },
       {
         "name": "name",
