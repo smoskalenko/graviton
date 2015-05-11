@@ -30,12 +30,12 @@ class ExistingReferenceValidator extends ConstraintValidator
     }
 
     /**
-     * @param mixed     $value     value to check
-     * @param Contraint $contraint contraint to match
+     * @param mixed      $value      value to check
+     * @param Constraint $constraint constraint to match
      *
      * @return void
      */
-    public function validate($value, Constraint $contraint)
+    public function validate($value, Constraint $constraint)
     {
     }
 }
