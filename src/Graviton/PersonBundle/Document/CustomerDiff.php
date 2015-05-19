@@ -20,7 +20,7 @@ class CustomerDiff
     protected $id;
 
     /**
-     * @var datetime $date
+     * @var \DateTime $date
      */
     protected $date;
 
