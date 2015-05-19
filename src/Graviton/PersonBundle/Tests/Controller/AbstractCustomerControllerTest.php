@@ -32,4 +32,25 @@ class AbstractCustomerControllerTest extends \PHPUnit_Framework_TestCase
 
         $this->assertInstanceOf('Graviton\RestBundle\Controller\RestController', $stub);
     }
+
+    /**
+     * @return void
+     */
+    public function testPostAction()
+    {
+        $diffRepoDouble = $this->getMockBuilder('Graviton\PersonBundle\Repository\CustomerDiffRepository')
+            ->disableOriginalConstructor()
+            ->getMock();
+        $requestDouble = $this->getMock('Symfony\Component\HttpFoundation\Request');
+
+        $stub = $this->getMockForAbstractClass(
+            'Graviton\PersonBundle\Controller\AbstractCustomerController',
+            [
+                $diffRepoDouble
+            ]
+        );
+        $this->markTestIncomplete();
+
+        $stub->postAction($requestDouble);
+    }
 }
