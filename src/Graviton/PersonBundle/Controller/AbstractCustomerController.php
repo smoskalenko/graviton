@@ -18,6 +18,8 @@ namespace Graviton\PersonBundle\Controller;
 
 use Graviton\RestBundle\Controller\RestController;
 use Graviton\PersonBundle\Repository\CustomerDiffRepository;
+use Symfony\Component\HttpFoundation\Request;
+use Symfony\Component\HttpFoundation\Response;
 
 /**
  * @author   List of contributors <https://github.com/libgraviton/graviton/graphs/contributors>
@@ -37,5 +39,31 @@ abstract class AbstractCustomerController extends RestController
     public function __construct(CustomerDiffRepository $diffRepo)
     {
         $this->diffRepo = $diffRepo;
+    }
+
+    /**
+     * save data to diff collection on post
+     *
+     * @param Request $request client request 
+     *
+     * @return Response $response
+     */
+    public function postAction(Request $request)
+    {
+        // grab request and check data
+        $response = $this->getResponse();
+        $record = $this->deserialize(
+            $request->getContent() //, add document class here!
+        );
+
+        // create diff object
+        $documentClass = $this->diffRepo->getDocumentClass;
+
+        $diff = new $documentClass;
+        $diff->setOld(null);
+
+        $manager = $this->diffRepo->getDocumentManager();
+        $manager->persist($diff);
+        $manager->flush();
     }
 }
