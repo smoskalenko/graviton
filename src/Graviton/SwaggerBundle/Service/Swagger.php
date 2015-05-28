@@ -18,10 +18,6 @@ use Symfony\Component\Routing\Route;
  */
 class Swagger
 {
-    /**
-     * @var \Symfony\Component\DependencyInjection\ContainerInterface service_container
-     */
-    private $container;
 
     /**
      * @var \Graviton\RestBundle\Service\RestUtils
@@ -32,18 +28,6 @@ class Swagger
      * @var SchemaModel
      */
     private $schemaModel;
-
-    /**
-     * sets the container
-     *
-     * @param \Symfony\Component\DependencyInjection\ContainerInterface $container service_container
-     *
-     * @return void
-     */
-    public function setContainer($container = null)
-    {
-        $this->container = $container;
-    }
 
     /**
      * sets restUtils
