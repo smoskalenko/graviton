@@ -119,6 +119,20 @@ class DocumentFormFieldsCompilerPass implements CompilerPassInterface, LoadField
         $map[$class] = [];
         foreach ($fieldNodes as $node) {
             $fieldName = $node->getAttribute('fieldName');
+
+            // is there a serializer config for this field?
+            $serializerNodes = $xpath->query(
+                "//class[@name='".$class."']/property[@name='".$fieldName."']"
+            );
+
+            if (
+                $serializerNodes->length == 1 &&
+                strlen($serializerNodes->item(0)->getAttribute('serialized-name')) > 0
+            ) {
+                // @todo see what we do with this..
+                $serializedName = $serializerNodes->item(0)->getAttribute('serialized-name');
+            }
+
             $doctrineType = $node->getAttribute('type');
 
             $translatableFields = [];

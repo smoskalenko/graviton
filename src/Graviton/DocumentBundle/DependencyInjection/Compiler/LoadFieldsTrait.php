@@ -74,25 +74,57 @@ trait LoadFieldsTrait
                         'doctrine'
                     ]
                 )
+            )->in(
+                implode(
+                    '/',
+                    [
+                        __DIR__,
+                        '..',
+                        '..',
+                        '..',
+                        '..',
+                        ucfirst($ns),
+                        ucfirst($bundle).'Bundle',
+                        'Resources',
+                        'config',
+                        'serializer'
+                    ]
+                )
             )->name(
-                ucfirst($doc).'.mongodb.xml'
+                '/^(?i:Document\.'.ucfirst($doc).'\.xml|'.ucfirst($doc).'\.mongodb\.xml)/'
             );
 
-        // we only want to find exactly one file
-        if ($files->count() != 1) {
+        // we only want to find exactly two files
+        if ($files->count() != 2) {
             return;
         }
         // array_pop would have been nice but won't work here, some day I'll look into iterators or whatnot
         $file = null;
+        $serializerFile = null;
         foreach ($files as $fileObject) {
-            $file = $fileObject->getRealPath();
+            $fileRealPath = $fileObject->getRealPath();
+            if (strpos($fileRealPath, 'doctrine') !== false) {
+                $file = $fileRealPath;
+            } else {
+                $serializerFile = $fileRealPath;
+            }
         }
-        if (!file_exists($file)) {
+        if (!file_exists($file) || !file_exists($serializerFile)) {
             return;
         }
 
         $dom = new \DOMDocument;
         $dom->Load($file);
+
+        $serializerDom = new \DOMDocument;
+        $serializerDom->Load($serializerFile);
+        $serializerNodes = $serializerDom->getElementsByTagName('serializer');
+
+        if ($serializerNodes->length == 1) {
+            $importedNode = $dom->importNode($serializerNodes->item(0), true);
+            $dom->documentElement->appendChild($importedNode);
+        }
+
         $xpath = new \DOMXPath($dom);
         $xpath->registerNamespace('doctrine', 'http://doctrine-project.org/schemas/odm/doctrine-mongo-mapping');
 
