@@ -10,6 +10,7 @@ use Graviton\SchemaBundle\Model\SchemaModel;
 use Symfony\Component\HttpFoundation\Request;
 use Doctrine\ODM\MongoDB\Query\Builder;
 use Graviton\RqlParserBundle\Factory;
+use Graviton\I18nBundle\Service\I18nUtils;
 
 /**
  * Use doctrine odm as backend
@@ -47,12 +48,19 @@ class DocumentModel extends SchemaModel implements ModelInterface
     private $rqlFactory;
 
     /**
-     * @param Factory $rqlFactory factory object to use
+     * @var I18nUtils
      */
-    public function __construct(Factory $rqlFactory)
+    private $translatorUtils;
+
+    /**
+     * @param Factory   $rqlFactory      factory object to use
+     * @param I18nUtils $translatorUtils translations utils, optional for rare cases that would be circular else
+     */
+    public function __construct(Factory $rqlFactory, I18nUtils $translatorUtils = null)
     {
         parent::__construct();
         $this->rqlFactory = $rqlFactory;
+        $this->translatorUtils = $translatorUtils;
     }
 
     /**
@@ -120,6 +128,11 @@ class DocumentModel extends SchemaModel implements ModelInterface
         } else {
             $numberPerPage = (int) $queryBuilder->getQuery()->getQuery()['limit'];
         }
+
+        /**
+         * make sure we search using the english variant in strings
+         */
+        $this->translateQuery($queryBuilder);
 
         /**
          * add a default sort on id if none was specified earlier
@@ -238,6 +251,43 @@ class DocumentModel extends SchemaModel implements ModelInterface
         $bundle = strtolower(substr(explode('\\', get_class($this))[1], 0, -6));
 
         return 'graviton.' . $bundle;
+    }
+
+    /**
+     * pretranslate query strings so we can search by their inglish variant
+     *
+     * @param Builder $queryBuilder doctrine query builder
+     *
+     * @return void
+     */
+    public function translateQuery(Builder &$queryBuilder)
+    {
+        if (is_null($this->translatorUtils)) {
+            return;
+        }
+        if (in_array(
+            'Graviton\I18nBundle\Document\TranslatableDocumentInterface',
+            class_implements($this->repository->getDocumentName())
+        )) {
+            $docName = $this->repository->getDocumentName();
+            $docInstance = new $docName;
+            $translatableFields = $docInstance->getTranslatableFields();
+
+            foreach ($queryBuilder->getQuery()->getFieldsInQuery() as $queryField) {
+                if (!in_array($queryField, $translatableFields)) {
+                    continue;
+                }
+                /**
+                 * @todo rewrite the query builder to get the actual value we should search by (not sure how)
+                 *
+                 * I'll probably use the translatable search part and apply it to the translatable doc and
+                 * then just do a plain search on the current model.
+                 *
+                 * This would mean that we always search using fully string on the doc and I need to figure
+                 * out what rammifications this has on thinks like 'like()' and 'in()' queries...
+                 */
+            }
+        }
     }
 
     /**

@@ -37,6 +37,7 @@
              class="%graviton.i18n.model.language.class%"
              parent="graviton.rest.model">
       <argument type="service" id="graviton.rql.factory"/>
+      <argument type="service" id="graviton.i18n.utils"/>
       <call method="setRepository">
         <argument type="service" id="graviton.i18n.repository.language"/>
       </call>
@@ -73,6 +74,7 @@
       class="%graviton.i18n.model.translatablelanguage.class%"
       parent="graviton.rest.model">
       <argument type="service" id="graviton.rql.factory"/>
+      <argument type="service" id="graviton.i18n.utils"/>
       <call method="setRepository">
         <argument type="service" id="graviton.i18n.repository.translatablelanguage"/>
       </call>
@@ -118,7 +120,7 @@
       <tag name="jms_serializer.event_listener" event="serializer.post_deserialize" method="onPostDeserialize" direction="deserialization"/>
     </service>
 
-    <service id="graviton.18n.utils"
+    <service id="graviton.i18n.utils"
              class="%graviton.i18n.utils.class%">
       <!-- this here specifies the 'original' language -->
       <argument type="string">%graviton.translator.default.locale%</argument>
@@ -127,6 +129,8 @@
       <argument type="service" id="graviton.i18n.repository.language"/>
       <argument type="service" id="graviton.i18n.request"/>
     </service>
+    <!-- This alias is here due to a typo that seems to have crept into quite some places -->
+    <service id="graviton.18n.utils" alias="graviton.i18n.utils"/>
 
     <service id="graviton.i18n.listener.postpersisttranslatable" class="%graviton.i18n.listener.postpersisttranslatable.class%">
       <tag name="doctrine_mongodb.odm.event_listener" event="postPersist" class="stdClass"/>
